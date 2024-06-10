@@ -3,126 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Video Player</title>
-    <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet">
-    <link href="https://unpkg.com/videojs-youtube/dist/videojs-youtube.css" rel="stylesheet">
+    <title>Custom Video Player</title>
     <style>
         body {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            background-color: #333;
             margin: 0;
-            background-color: #f0f0f0;
         }
 
         .video-container {
             position: relative;
             width: 640px;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
-        .vjs-default-skin {
-            border-radius: 15px;
+        video {
+            width: 100%;
+            height: auto;
+            background-color: #000;
         }
 
-        .controls-island {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.7);
-            border-radius: 30px;
-            padding: 10px 20px;
+        .controls {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
         }
 
-        .controls-island button {
-            background-color: transparent;
+        button, input[type=range] {
+            margin: 0 5px;
+            background: none;
             border: none;
             color: white;
-            padding: 10px;
-            margin: 0 5px;
             cursor: pointer;
-            font-size: 20px;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
-        .controls-island button:hover {
-            background-color: rgba(255, 255, 255, 0.2);
+        button:focus, input[type=range]:focus {
+            outline: none;
         }
     </style>
 </head>
 <body>
     <div class="video-container">
-        <video id="video" class="video-js vjs-default-skin" controls preload="auto" width="640" height="360" data-setup='{}'>
-            <source src="video.mp4" type="video/mp4">
-            <source src="video.m3u8" type="application/x-mpegURL">
-            <track kind="captions" src="path/to/your/captions.vtt" srclang="en" label="English">
-            Your browser does not support the video tag.
-        </video>
-        <div class="controls-island">
-            <button id="fast-backward">&laquo;</button>
-            <button id="play-pause">Play</button>
-            <button id="fast-forward">&raquo;</button>
+        <video id="video" width="640" height="360" src="your-video-file.mp4"></video>
+        <div class="controls">
+            <button id="play-pause" class="play">Play</button>
+            <input type="range" id="progress-bar" value="0">
+            <button id="mute-unmute" class="mute">Mute</button>
+            <input type="range" id="volume-bar" min="0" max="1" step="0.1" value="1">
         </div>
     </div>
-    <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
-    <script src="https://unpkg.com/videojs-youtube/dist/videojs-youtube.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/videojs-contrib-quality-levels/2.0.9/videojs-contrib-quality-levels.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/videojs-hls-quality-selector/dist/videojs-hls-quality-selector.min.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const player = videojs('video', {
-                controls: true,
-                plugins: {
-                    videoJsResolutionSwitcher: {
-                        default: 'high',
-                        dynamicLabel: true
-                    }
-                }
-            });
+        document.addEventListener("DOMContentLoaded", function() {
+            const video = document.getElementById('video');
+            const playPauseButton = document.getElementById('play-pause');
+            const progressBar = document.getElementById('progress-bar');
+            const muteUnmuteButton = document.getElementById('mute-unmute');
+            const volumeBar = document.getElementById('volume-bar');
 
-            player.hlsQualitySelector();
-
-            const playPauseBtn = document.getElementById("play-pause");
-            const fastForwardBtn = document.getElementById("fast-forward");
-            const fastBackwardBtn = document.getElementById("fast-backward");
-
-            playPauseBtn.addEventListener("click", () => {
-                if (player.paused()) {
-                    player.play();
-                    playPauseBtn.textContent = "Pause";
+            // Play and Pause the video
+            playPauseButton.addEventListener('click', function() {
+                if (video.paused) {
+                    video.play();
+                    playPauseButton.textContent = 'Pause';
                 } else {
-                    player.pause();
-                    playPauseBtn.textContent = "Play";
+                    video.pause();
+                    playPauseButton.textContent = 'Play';
                 }
             });
 
-            fastForwardBtn.addEventListener("click", () => {
-                player.currentTime(Math.min(player.duration(), player.currentTime() + 5));
+            // Update the progress bar as the video plays
+            video.addEventListener('timeupdate', function() {
+                const value = (100 / video.duration) * video.currentTime;
+                progressBar.value = value;
             });
 
-            fastBackwardBtn.addEventListener("click", () => {
-                player.currentTime(Math.max(0, player.currentTime() - 5));
+            // Seek video when the progress bar is changed
+            progressBar.addEventListener('input', function() {
+                const time = video.duration * (progressBar.value / 100);
+                video.currentTime = time;
             });
 
-            player.on('play', () => {
-                playPauseBtn.textContent = "Pause";
+            // Mute and Unmute the video
+            muteUnmuteButton.addEventListener('click', function() {
+                if (video.muted) {
+                    video.muted = false;
+                    muteUnmuteButton.textContent = 'Mute';
+                } else {
+                    video.muted = true;
+                    muteUnmuteButton.textContent = 'Unmute';
+                }
             });
 
-            player.on('pause', () => {
-                playPauseBtn.textContent = "Play";
+            // Update the video volume
+            volumeBar.addEventListener('input', function() {
+                video.volume = volumeBar.value;
             });
         });
     </script>
